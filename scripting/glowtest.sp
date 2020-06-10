@@ -21,38 +21,80 @@ public Plugin myinfo =
 	url = PLUGIN_URL
 };
 
+ArrayList al;
+
 public void OnPluginStart()
 {
 	RegConsoleCmd("sm_setupglow", Command_SetupGlow);
 	RegConsoleCmd("sm_setupglowex", Command_SetupGlowEx);
-	RegConsoleCmd("sm_setclientkeep", Command_SetClientKeep);
-	RegConsoleCmd("sm_toggleglow", Command_ToggleGlow);
+	RegConsoleCmd("sm_disableglow", Command_DisableGlow);
+
 	RegConsoleCmd("sm_setglowcolor", Command_SetGlowColor);
 	RegConsoleCmd("sm_setglowdist", Command_SetGlowDist);
 	RegConsoleCmd("sm_setglowstyle", Command_SetGlowStyle);
 
+	RegConsoleCmd("sm_toggleglow", Command_ToggleGlow);
+
+	RegConsoleCmd("sm_addtolist", Command_AddToList); //In these commands, We assume that the owner already has a glow.
+	RegConsoleCmd("sm_removefromlist", Command_RemoveFromList);
+	RegConsoleCmd("sm_clearlist", Command_ClearList);
+	RegConsoleCmd("sm_isinlist", Command_IsInList);
+	RegConsoleCmd("sm_updatelist", Command_UpdateList);
+
 	RegConsoleCmd("sm_rainbowglow", Command_RainbowGlow);
+
+	al = new ArrayList();
 }
-//Test commands, with only the necessary checks. Atm we don't really care if some1 pass a wrong arg, but make sure you check everything before passing a variable!
-public Action Command_SetupGlow(int client, int args)
+//Test commands, with only the necessary checks. Atm we don't really care if some1 pass a wrong arg, but make sure you check everything before calling a native!
+public Action Command_UpdateList(int client, int args)
 {
-	if(!Glow_GetStatus(client)) Glow_Setup(client);
-	else Glow_Disable(client);
+	al.Clear();
+	for(int i = 1; i <= MaxClients; i++) //As an example, we add everyone on the server to the ->client's exclude list, so noone will be able to see the glow
+	{
+		if(!IsValidClient(i)) continue;
+		al.Push(i);
+	}
+
+	Glow_UpdateExcludeList(client, al);
 	return Plugin_Handled;
 }
 
-public Action Command_SetupGlowEx(int client, int args)
-{
-	if(!Glow_GetStatus(client)) Glow_SetupEx(client, _, 0, _, _, false); //If you pass false you'll be able to see the glow in thirdperson, otherwise only other players could see it, which is the normal case.
-	else Glow_Disable(client);
-	return Plugin_Handled;
-}
-
-public Action Command_SetClientKeep(int client, int args)
+public Action Command_IsInList(int client, int args)
 {
 	if(args != 2)
 	{
-		PrintToChat(client, "Usage: !sm_setclientkeep targetname status");
+		PrintToChat(client, "Usage: !removefromlist owner target");
+		return Plugin_Handled;
+	}
+
+	char szTarget[MAX_NAME_LENGTH+1], szOwner[MAX_NAME_LENGTH+1];
+	GetCmdArg(1, szOwner, sizeof(szOwner));
+	int owner = FindTarget(client, szOwner);
+
+	if(!IsValidClient(owner))
+	{
+		PrintToChat(client, "Invalid owner");
+		return Plugin_Handled;
+	}
+
+	GetCmdArg(2, szTarget, sizeof(szTarget));
+	int target = FindTarget(client, szTarget);
+
+	if(!IsValidClient(target))
+	{
+		PrintToChat(client, "Invalid target");
+		return Plugin_Handled;
+	}
+
+	PrintToChat(client, "%N is %s %N's exclude list", target, Glow_IsInExcludeList(target, owner)?"in":"not in", owner);
+	return Plugin_Handled;
+}
+
+public Action Command_ClearList(int client, int args)
+{
+	if(args != 1)
+	{
+		PrintToChat(client, "Usage: !clearlist target");
 		return Plugin_Handled;
 	}
 
@@ -66,10 +108,92 @@ public Action Command_SetClientKeep(int client, int args)
 		return Plugin_Handled;
 	}
 
-	char state[3];
-	GetCmdArg(2, state, sizeof(state));
-	Glow_SetClientKeep(target, !!StringToInt(state));
-	PrintToChat(client, "Changed %N's keep value to: %s", target, state);
+	Glow_ClearExcludeList(target);
+	return Plugin_Handled;
+}
+
+public Action Command_RemoveFromList(int client, int args)
+{
+	if(args != 2)
+	{
+		PrintToChat(client, "Usage: !removefromlist owner target");
+		return Plugin_Handled;
+	}
+
+	char szTarget[MAX_NAME_LENGTH+1], szOwner[MAX_NAME_LENGTH+1];
+	GetCmdArg(1, szOwner, sizeof(szOwner));
+	int owner = FindTarget(client, szOwner);
+
+	if(!IsValidClient(owner))
+	{
+		PrintToChat(client, "Invalid owner");
+		return Plugin_Handled;
+	}
+
+	GetCmdArg(2, szTarget, sizeof(szTarget));
+	int target = FindTarget(client, szTarget);
+
+	if(!IsValidClient(target))
+	{
+		PrintToChat(client, "Invalid target");
+		return Plugin_Handled;
+	}
+
+	Glow_RemoveFromExcludeList(owner, target);
+	return Plugin_Handled;
+}
+
+public Action Command_AddToList(int client, int args)
+{
+	if(args != 2)
+	{
+		PrintToChat(client, "Usage: !addtolist owner target");
+		return Plugin_Handled;
+	}
+
+	char szTarget[MAX_NAME_LENGTH+1], szOwner[MAX_NAME_LENGTH+1];
+	GetCmdArg(1, szOwner, sizeof(szOwner));
+	int owner = FindTarget(client, szOwner);
+
+	if(!IsValidClient(owner))
+	{
+		PrintToChat(client, "Invalid owner");
+		return Plugin_Handled;
+	}
+
+	GetCmdArg(2, szTarget, sizeof(szTarget));
+	int target = FindTarget(client, szTarget);
+
+	if(!IsValidClient(target))
+	{
+		PrintToChat(client, "Invalid target");
+		return Plugin_Handled;
+	}
+
+	Glow_AddToExcludeList(owner, target);
+	return Plugin_Handled;
+}
+
+public Action Command_DisableGlow(int client, int args)
+{
+	if(Glow_GetStatus(client)) Glow_Disable(client);
+	return Plugin_Handled;
+}
+
+public Action Command_SetupGlow(int client, int args)
+{
+	if(!Glow_GetStatus(client)) Glow_Setup(client);
+	else Glow_Disable(client);
+	return Plugin_Handled;
+}
+
+public Action Command_SetupGlowEx(int client, int args)
+{
+	if(!Glow_GetStatus(client)) {
+		al.Clear();
+		al.Push(client); //We add ourselves to the list
+		Glow_SetupEx(client, _, 0, _, false, al); //If you pass false you'll be able to see the glow in thirdperson, otherwise only other players could see it, which is the normal case.
+	} else Glow_Disable(client);
 	return Plugin_Handled;
 }
 
@@ -146,7 +270,7 @@ public Action Command_SetGlowDist(int client, int args)
 {
 	if(args != 2)
 	{
-		PrintToChat(client, "Usage: !sm_setglowdist targetname dist (must be set first)");
+		PrintToChat(client, "Usage: !setglowdist targetname dist (must be set first)");
 		return Plugin_Handled;
 	}
 
