@@ -1,5 +1,5 @@
-public bool CreateGlow(int client, int colors[3], int style, float maxdist, bool keep, bool hide) 
-{	
+public bool CreateGlow(int client, int colors[3], int style, float maxdist, bool hide)
+{
 	if(GlowStatus(client)) DisableGlow(client, pg[client].Index);
 
 	char model[PLATFORM_MAX_PATH];
@@ -8,19 +8,20 @@ public bool CreateGlow(int client, int colors[3], int style, float maxdist, bool
 	skin = CreatePlayerModelProp(client, model);
 	if(skin > MaxClients)
 	{
-		if(hide && !SDKHookEx(skin, SDKHook_SetTransmit, OnSetTransmit_All))
+		if(!SDKHookEx(skin, SDKHook_SetTransmit, OnSetTransmit_All))
 			return false;
 
-		return SetupGlow(skin, client, colors, style, maxdist, keep);
+		return SetupGlow(skin, client, colors, style, maxdist, hide);
 	}
 
 	return false;
 }
 
-public bool SetupGlow(int entity, int client, int colors[3], int style, float maxdist, bool keep)
+public bool SetupGlow(int entity, int client, int colors[3], int style, float maxdist, bool hide)
 {
-	int m_clrGlow = CanGlow(entity);
-	if((m_clrGlow = CanGlow(entity)) == -1) return false;
+	int m_clrGlow = -1;
+	if((m_clrGlow = CanGlow(entity)) == -1)
+		return false;
 
 	SetEntProp(entity, Prop_Send, "m_bShouldGlow", true, true);
 	SetEntProp(entity, Prop_Send, "m_nGlowStyle", style);
@@ -31,13 +32,11 @@ public bool SetupGlow(int entity, int client, int colors[3], int style, float ma
 		SetEntData(entity, m_clrGlow + i, colors[i], _, true);
 	}
 
-	if(keep)
-	{
-		pg[client].State = pg[client].Keep = keep;
-		pg[client].Style = style;
-		pg[client].MaxDist = maxdist;
-		pg[client].Color = colors;
-	}
+	pg[client].State = true;
+	pg[client].Style = style;
+	pg[client].MaxDist = maxdist;
+	pg[client].Color = colors;
+	pg[client].Hide = hide;
 
 	Call_StartForward(gfOnSetup);
 	Call_PushCell(entity);
@@ -107,7 +106,7 @@ public void DisableGlow(int client, int skin)
 public void RemoveSkin(int client)
 {
 	if(IsValidEntity(pg[client].Reference)) AcceptEntityInput(pg[client].Reference, "Kill");
-	pg[client].Reset(!pg[client].Keep);
+	pg[client].Reset();
 
 	Call_StartForward(gfOnDisable);
 	Call_PushCell(client);
@@ -116,7 +115,7 @@ public void RemoveSkin(int client)
 
 public bool GlowStatus(int client)
 {
-	if(pg[client].Index == -1 && !pg[client].State) return false;
+	if(pg[client].Index == -1 || !pg[client].State) return false;
 	return true;
 }
 
@@ -127,7 +126,7 @@ public bool SetGlowState(int entity, bool newstate)
 	return true;
 }
 
-public bool SetGlowStyle(int entity, bool newstyle)
+public bool SetGlowStyle(int entity, int newstyle)
 {
 	if(!IsValidEntity(entity)) return false;
 	SetEntProp(entity, Prop_Send, "m_nGlowStyle", newstyle);
@@ -163,4 +162,33 @@ public int GetClientGlowIndex(int client)
 public int GetClientGlowReference(int client)
 {
 	return pg[client].Reference;
+}
+
+stock int GetClientFromSkinIndex(int skin)
+{
+	for(int i = 1; i <= MaxClients; i++)
+	{
+		if(!IsValidClient(i)) continue;
+		if(pg[i].Index == skin) return i;
+	}
+
+	return -1;
+}
+
+stock int GetClientFromSkinRef(int ref)
+{
+	for(int i = 1; i <= MaxClients; i++)
+	{
+		if(!IsValidClient(i)) continue;
+		if(pg[i].Reference == ref) return i;
+	}
+
+	return -1;
+}
+
+stock bool IsInExcludeList(ArrayList list, int client)
+{
+	if(list == view_as<ArrayList>(INVALID_HANDLE)) return false;
+	if(list.FindValue(client) == -1) return false;
+	return true;
 }

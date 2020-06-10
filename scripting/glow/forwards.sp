@@ -28,28 +28,8 @@ public void OnClientPostAdminCheck(int client)
 
 public Action OnSetTransmit_All(int entity, int client)
 {
-	if(pg[client].Index != entity) return Plugin_Continue;
-	return Plugin_Handled;
-}
-
-public void Event_PlayerSpawn(Event event, const char[] name, bool dbc)
-{
-	int client = GetClientOfUserId(event.GetInt("userid"));
-	if(!IsValidClient(client)) return;
-	if(GetClientTeam(client) < 2) return;
-	if(GlowStatus(client))
-	{
-		if(pg[client].Keep) CreateGlow(client, pg[client].Color, pg[client].Style, pg[client].MaxDist, pg[client].Keep, false);
-		else DisableGlow(client, pg[client].Index);
-	}
-}
-
-public void Event_PlayerDeath(Event event, const char[] name, bool dbc)
-{
-	int client = GetClientOfUserId(event.GetInt("userid"));
-	if(!IsValidClient(client)) return;
-	if(GlowStatus(client))
-	{
-		DisableGlow(client, pg[client].Index);
-	}
+	if(pg[client].Index == entity && pg[client].Hide) return Plugin_Handled;
+	int owner = GetClientFromSkinIndex(entity);
+	if(IsInExcludeList(pg[owner].Exclude, client)) return Plugin_Handled;
+	return Plugin_Continue;
 }

@@ -34,14 +34,7 @@ void Initialize() {
 		SetFailState("This API only supports CS:GO");
 	}
 
-	Hooks();
 	ResetPlayers();
-}
-
-static stock void Hooks()
-{
-	HookEvent("player_spawn", Event_PlayerSpawn, EventHookMode_Post);
-	HookEvent("player_death", Event_PlayerDeath, EventHookMode_Post);
 }
 
 static stock void ResetPlayers()
