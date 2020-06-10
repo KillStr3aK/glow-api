@@ -4,7 +4,7 @@
 #define _glow_included
 
 /**
- * Setup a simple glow for the given player that can be customized later. (Not saved, and hided.)
+ * Setup a simple glow for the given player that can be customized later. (Not hided.)
  *
  * @param client        Client index.
  * @return              True if glow is created, false otherwise.
@@ -16,13 +16,12 @@ native bool Glow_Setup(int client);
  *
  * @param client        Client index.
  * @param colors        Desired glow color in RGB.
- * @param style         Glow style. 1 = Body Glow 0 = Outline
+ * @param style         Glow style. 3 = Outline V2 + Pulse, 2 = Outline V2, 1 = Body + Pulse, 0 = Outline (! Style 0 CAN BE SEEN THROUGH WALLS!)
  * @param maxdist       Glow visible distance
- * @param keep          Keep player glow (Recreate it in new rounds, etc. To disable you must use Glow_SetClientKeep(client, false))
  * @param hide          Hide the glow from the player (leave it on false if you don't know what you're doin)
  * @return              True if glow is created, false otherwise.
  */
-native bool Glow_SetupEx(int client, int colors[3] = {255, 0, 0}, int style = 1, float maxdist = 10000.0, bool keep = true, bool hide = false);
+native bool Glow_SetupEx(int client, int colors[3] = {255, 0, 0}, int style = 1, float maxdist = 10000.0, bool hide = false, ArrayList exclude = view_as<ArrayList>(INVALID_HANDLE));
 
 /**
  * Removes the glow from the player.
@@ -93,13 +92,48 @@ native bool Glow_SetDist(int entity, float dist);
 native bool Glow_SetColor(int entity, int color[3]);
 
 /**
- * Change client keeping.
+ * Add the target to the owner's exclude list. (The glow isn't drawn for list members)
+ *
+ * @param owner			Client index of the glow onwer.
+ * @param target		Target client index.
+ * @return				True if added OR if the target was already in the list, false if glow was not set, or invalid client index.
+ */
+native bool Glow_AddToExcludeList(int owner, int target);
+
+/**
+ * Remove the target from the owner's exclude list
+ *
+ * @param owner			Client index of the glow onwer.
+ * @param target		Target client index.
+ * @return				True if removed, false if glow was not set, or invalid client index.
+ */
+native bool Glow_RemoveFromExcludeList(int owner, int target);
+
+/**
+ * Update the player's glow excludelist.
  *
  * @param client        Client index.
- * @param newvalue         New value. (If changing to false, data will be wiped in the next round.)
+ * @param newlist       A completely new excludelist.
+ * @return              Returns true if set, false if glow was not set, or invalid client index.
+ */
+native bool Glow_UpdateExcludeList(int client, ArrayList newlist);
+
+/**
+ * Check whether the given client is in the exclude list.
+ *
+ * @param client		Client index.
+ * @param owner			Glow owner index.
+ * @return				True if the client is in the list, false if not or glow was not set, or invalid index.
+ */
+native bool Glow_IsInExcludeList(int client, int owner);
+
+/**
+ * Clear the excludelist
+ *
+ * @param client        Client index.
  * @noreturn
  */
-native void Glow_SetClientKeep(int client, bool newvalue);
+native void Glow_ClearExcludeList(int client);
 
 /**
 * Called when a glow has been set on a player.
