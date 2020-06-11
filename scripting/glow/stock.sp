@@ -3,7 +3,7 @@ stock bool IsValidClient(int client)
 	if(client <= 0) return false;
 	if(client > MaxClients) return false;
 	if(!IsClientConnected(client)) return false;
-	if(IsFakeClient(client)) return false;
+	//if(IsFakeClient(client)) return false;
 	if(IsClientSourceTV(client)) return false;
 	return IsClientInGame(client);
 }

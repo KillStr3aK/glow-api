@@ -9,6 +9,13 @@ public void OnPluginEnd()
 	{
 		OnClientDisconnect(i);
 	}
+
+	int ents = GetEntityCount();
+	for(int i = MaxClients; i < ents; i++)
+	{
+		RemoveGlowFromEnt(i, eg[i].Index);
+		eg[i].Reset();
+	}
 }
 
 public void OnMapEnd()
@@ -18,7 +25,8 @@ public void OnMapEnd()
 
 public void OnClientDisconnect(int client)
 {
-	if(IsValidClient(client) && GlowStatus(client)) DisableGlow(client, pg[client].Index);
+	if(!IsValidClient(client)) return;
+	if(GlowStatus(client)) DisableGlow(client, pg[client].Index);
 }
 
 public void OnClientPostAdminCheck(int client)
@@ -32,4 +40,25 @@ public Action OnSetTransmit_All(int entity, int client)
 	int owner = GetClientFromSkinIndex(entity);
 	if(IsInExcludeList(pg[owner].Exclude, client)) return Plugin_Handled;
 	return Plugin_Continue;
+}
+
+public Action OnSetTransmit_Entity(int entity, int client)
+{
+	if(IsInExcludeList(pg[entity].Exclude, client)) return Plugin_Handled;
+	return Plugin_Continue;
+}
+
+public void Event_PlayerDeath(Event event, const char[] name, bool dbc)
+{
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	if(!IsValidClient(client)) return;
+	if(GlowStatus(client))
+	{
+		DisableGlow(client, pg[client].Index);
+	}
+}
+
+public void Event_RoundStart(Event event, const char[] name, bool dbc)
+{
+	OnPluginEnd();
 }

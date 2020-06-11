@@ -4,6 +4,10 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("Glow_SetupEx", Native_SetupGlowEx);
 	CreateNative("Glow_Disable", Native_SetGlowStatus);
 
+	CreateNative("Glow_SetupEnt", Native_SetupGlowEnt);
+	CreateNative("Glow_SetupEntEx", Native_SetupGlowEntEx);
+	CreateNative("Glow_RemoveFromEnt", Native_RemoveFromEnt);
+
 	CreateNative("Glow_GetStatus", Native_GlowStatus);
 	CreateNative("Glow_GetClientIndex", Native_GetIndex);
 	CreateNative("Glow_GetClientReference", Native_GetReference);
@@ -19,10 +23,46 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("Glow_ClearExcludeList", Native_ClearExcludeList);
 	CreateNative("Glow_IsInExcludeList", Native_IsInExcludeList);
 
+	CreateNative("Glow_CanGlow", Native_CanGlow);
+
     gfOnSetup = new GlobalForward("Glow_OnSetup", ET_Ignore, Param_Cell, Param_Cell, Param_Array, Param_Cell, Param_Float);
     gfOnDisable = new GlobalForward("Glow_OnDisable", ET_Ignore, Param_Cell);
 
 	return APLRes_Success;
+}
+
+public int Native_RemoveFromEnt(Handle plugin, int params)
+{
+	int entity = GetNativeCell(1);
+	RemoveGlowFromEnt(entity, eg[entity].Index);
+}
+
+public int Native_SetupGlowEnt(Handle plugin, int params)
+{
+	int entity = GetNativeCell(1);
+	if(!IsValidEntity(entity)) return false;
+	return CreateEntityGlow(entity, "255 0 0", "0", "10000.0");
+}
+
+public int Native_SetupGlowEntEx(Handle plugin, int params)
+{
+	int entity = GetNativeCell(1);
+	if(!IsValidEntity(entity)) return false;
+	char szColor[12];
+	GetNativeString(2, szColor, sizeof(szColor));
+	char szStyle[3];
+	GetNativeString(3, szStyle, sizeof(szStyle));
+	char szMaxDist[12];
+	GetNativeString(4, szMaxDist, sizeof(szMaxDist));
+	eg[entity].Exclude = GetNativeCell(5);
+	return CreateEntityGlow(entity, szColor, szStyle, szMaxDist);
+}
+
+public int Native_CanGlow(Handle plugin, int params)
+{
+	int entity = GetNativeCell(1);
+	if(!IsValidEntity(entity)) ThrowNativeError(false, "Invalid entity index");
+	return CanGlow(entity);
 }
 
 public int Native_IsInExcludeList(Handle plugin, int params)
@@ -38,7 +78,7 @@ public int Native_IsInExcludeList(Handle plugin, int params)
 public int Native_ClearExcludeList(Handle plugin, int params)
 {
 	int client = GetNativeCell(1);
-	if(!IsValidClient(client)) ThrowNativeError(false, "Invalid client index");
+	if(!IsValidEntity(client)) ThrowNativeError(false, "Invalid client index");
 	if(!GlowStatus(client)) ThrowNativeError(false, "A glow must be set first!");
 	if(pg[client].Exclude != null)
 	{
@@ -137,30 +177,25 @@ public int Native_GetReference(Handle plugin, int params)
 public int Native_SetState(Handle plugin, int params)
 {
 	int entity = GetNativeCell(1);
-	if(!IsValidEntity(entity)) return ThrowNativeError(false, "Invalid entity index");
 	return SetGlowState(entity, GetNativeCell(2));
 }
 
 public int Native_SetStyle(Handle plugin, int params)
 {
 	int entity = GetNativeCell(1);
-	if(!IsValidEntity(entity)) return ThrowNativeError(false, "Invalid entity index");
 	int style = GetNativeCell(2);
-	if(style < 0 || style > 3) return ThrowNativeError(false, "Invalid style");
 	return SetGlowStyle(entity, style);
 }
 
 public int Native_SetDist(Handle plugin, int params)
 {
 	int entity = GetNativeCell(1);
-	if(!IsValidEntity(entity)) return ThrowNativeError(false, "Invalid entity index");
 	return SetGlowDist(entity, GetNativeCell(2));
 }
 
 public int Native_SetColor(Handle plugin, int params)
 {
 	int entity = GetNativeCell(1);
-	if(!IsValidEntity(entity)) ThrowNativeError(false, "Invalid entity index");
 	int arr[3];
 	GetNativeArray(2, arr, sizeof(arr));
 	return SetGlowColor(entity, arr);

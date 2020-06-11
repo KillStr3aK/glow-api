@@ -19,6 +19,7 @@ public bool CreateGlow(int client, int colors[3], int style, float maxdist, bool
 
 public bool SetupGlow(int entity, int client, int colors[3], int style, float maxdist, bool hide)
 {
+	if(!IsValidClient(client)) return false;
 	int m_clrGlow = -1;
 	if((m_clrGlow = CanGlow(entity)) == -1)
 		return false;
@@ -115,8 +116,14 @@ public void RemoveSkin(int client)
 
 public bool GlowStatus(int client)
 {
-	if(pg[client].Index == -1 || !pg[client].State) return false;
-	return true;
+	if(pg[client].Index != -1)
+	{
+		if(!HasEntProp(pg[client].Index, Prop_Send, "m_bShouldGlow") || !HasEntProp(pg[client].Index, Prop_Send, "m_nGlowStyle")) return false;
+		if(GetEntProp(pg[client].Index, Prop_Send, "m_bShouldGlow")) return true;
+		else return (GetEntProp(pg[client].Index, Prop_Send, "m_nGlowStyle") == pg[client].Style);
+	}
+
+	return pg[client].State;
 }
 
 public bool SetGlowState(int entity, bool newstate)
@@ -129,6 +136,7 @@ public bool SetGlowState(int entity, bool newstate)
 public bool SetGlowStyle(int entity, int newstyle)
 {
 	if(!IsValidEntity(entity)) return false;
+	if(newstyle < 0 || newstyle > 3) return false;
 	SetEntProp(entity, Prop_Send, "m_nGlowStyle", newstyle);
 	return true;
 }

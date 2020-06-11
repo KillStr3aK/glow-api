@@ -27,6 +27,7 @@ public Plugin myinfo =
 #include "glow/natives.sp"
 #include "glow/forwards.sp"
 #include "glow/main.sp"
+#include "glow/entity.sp"
 
 void Initialize() {
 	if(GetEngineVersion() != Engine_CSGO)
@@ -35,6 +36,12 @@ void Initialize() {
 	}
 
 	ResetPlayers();
+}
+
+static stock void Hooks()
+{
+	HookEvent("player_death", Event_PlayerDeath, EventHookMode_Post);
+	HookEvent("round_start", Event_RoundStart); //Entities are recreated at every round start
 }
 
 static stock void ResetPlayers()
