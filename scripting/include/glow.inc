@@ -32,6 +32,34 @@ native bool Glow_SetupEx(int client, int colors[3] = {255, 0, 0}, int style = 1,
 native void Glow_Disable(int client);
 
 /**
+ * Setup a simple glow for the given entity that can be customized later. (Not hided.)
+ *
+ * @param entity        Client index.
+ * @return              True if glow is created, false otherwise.
+ */
+native bool Glow_SetupEnt(int entity);
+
+/**
+ * Setup a simple glow for the given entity that can be customized later. (Not hided.)
+ *
+ * @param entity        Client index.
+ * @param color			Color in RGB.
+ * @param style        	Glow Style
+ * @param maxdist		MaxDist.
+ * @param exclude		List of entity indexes that should not see the glow.
+ * @return              True if glow is created, false otherwise.
+ */
+native bool Glow_SetupEntEx(int entity, const char[] color = "255 0 0", const char[] style = "0", const char[] maxdist = "10000.0", ArrayList exclude = view_as<ArrayList>(INVALID_HANDLE));
+
+/**
+ * Removes the glow from the entity.
+ *
+ * @param entity        Entity index.
+ * @noreturn
+ */
+native void Glow_RemoveFromEnt(int entity);
+
+/**
  * Returns glow status.
  *
  * @param client        Client index.
@@ -128,7 +156,7 @@ native bool Glow_UpdateExcludeList(int client, ArrayList newlist);
 native bool Glow_IsInExcludeList(int client, int owner);
 
 /**
- * Clear the excludelist
+ * Clear the excludelist.
  *
  * @param client        Client index.
  * @noreturn
