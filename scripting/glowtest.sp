@@ -1,4 +1,5 @@
 #include <sourcemod>
+#include <sdktools>
 #include <glow>
 
 #define PLUGIN_NEV	"Glow API Test"
@@ -11,6 +12,7 @@
 #pragma semicolon 1;
 
 int rr[3] = { 0, ... };
+int selent;
 
 public Plugin myinfo = 
 {
@@ -25,6 +27,12 @@ ArrayList al;
 
 public void OnPluginStart()
 {
+	RegConsoleCmd("sm_selent", Command_Selent);
+
+	RegConsoleCmd("sm_setupglowent", Command_SetupGlowEnt);
+	RegConsoleCmd("sm_setupglowentex", Command_SetupGlowEntEx);
+	RegConsoleCmd("sm_removefroment", Command_RemoveFromEnt);
+
 	RegConsoleCmd("sm_setupglow", Command_SetupGlow);
 	RegConsoleCmd("sm_setupglowex", Command_SetupGlowEx);
 	RegConsoleCmd("sm_disableglow", Command_DisableGlow);
@@ -42,9 +50,37 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_updatelist", Command_UpdateList);
 
 	RegConsoleCmd("sm_rainbowglow", Command_RainbowGlow);
+	RegConsoleCmd("sm_rainbowglowall", Command_RainbowGlowAll);
 
 	al = new ArrayList();
 }
+
+public Action Command_Selent(int client, int args)
+{
+	selent = GetClientAimTarget(client, false);
+	if(!IsValidEntity(selent) || selent == 0) selent = client;
+	PrintToChat(client, " \x04|%i|-> \x07[%i]", client, selent);
+	return Plugin_Handled;
+}
+
+public Action Command_SetupGlowEnt(int client, int args)
+{
+	Glow_SetupEnt(selent);
+	return Plugin_Handled;
+}
+
+public Action Command_SetupGlowEntEx(int client, int args)
+{
+	Glow_SetupEntEx(selent);
+	return Plugin_Handled;
+}
+
+public Action Command_RemoveFromEnt(int client, int args)
+{
+	Glow_RemoveFromEnt(selent);
+	return Plugin_Handled;
+}
+
 //Test commands, with only the necessary checks. Atm we don't really care if some1 pass a wrong arg, but make sure you check everything before calling a native!
 public Action Command_UpdateList(int client, int args)
 {
@@ -191,7 +227,7 @@ public Action Command_SetupGlowEx(int client, int args)
 {
 	if(!Glow_GetStatus(client)) {
 		al.Clear();
-		al.Push(client); //We add ourselves to the list
+		al.Push(client); //We add ourselves to the list, so we can't see our own glow
 		Glow_SetupEx(client, _, 0, _, false, al); //If you pass false you'll be able to see the glow in thirdperson, otherwise only other players could see it, which is the normal case.
 	} else Glow_Disable(client);
 	return Plugin_Handled;
@@ -333,6 +369,18 @@ public Action Command_RainbowGlow(int client, int args)
 	return Plugin_Handled;
 }
 
+public Action Command_RainbowGlowAll(int client, int args)
+{
+	for(int i = 1; i <= MaxClients; i++)
+	{
+		if(!IsValidClient(i)) continue;
+		Glow_SetupEx(i, _, 0);
+		CreateTimer(0.1, ManageGlowColor, GetClientUserId(i), TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
+	}
+
+	return Plugin_Handled;
+}
+
 public void Glow_OnSetup(int entity, int client, int colors[3], int style, float maxdist)
 {
 	PrintToChatAll("%N (%i) glow has been set: Color: %i-%i-%i Style: %i MaxDist: %.1f", client, entity, colors[0], colors[1], colors[2], style, maxdist);
@@ -363,7 +411,7 @@ stock bool IsValidClient(int client)
 	if(client <= 0) return false;
 	if(client > MaxClients) return false;
 	if(!IsClientConnected(client)) return false;
-	if(IsFakeClient(client)) return false;
+	//if(IsFakeClient(client)) return false;
 	if(IsClientSourceTV(client)) return false;
 	return IsClientInGame(client);
 }
