@@ -86,38 +86,38 @@ native int Glow_GetClientReference(int client);
 /**
  * Change the glow status (On/Off).
  *
- * @param client        Entity index.
+ * @param client        Client index.
  * @param state         New state.
  * @return              Returns true if set, false if invalid entity.
  */
-native bool Glow_SetState(int entity, bool state);
+native bool Glow_SetState(int client, bool state);
 
 /**
  * Change the glow style (0 - Outline, 1 - Body + Pulse, 2 = Outline V2, 3 = Outline V2 + Pulse).
  *
- * @param client        Entity index.
+ * @param client        Client index.
  * @param style         New style.
  * @return              Returns true if set, false if invalid entity.
  */
-native bool Glow_SetStyle(int entity, int style);
+native bool Glow_SetStyle(int client, int style);
 
 /**
  * Change the glow maxdist.
  *
- * @param client        Entity index.
+ * @param client        Client index.
  * @param dist          New maxdist.
  * @return              Returns true if set, false if invalid entity.
  */
-native bool Glow_SetDist(int entity, float dist);
+native bool Glow_SetDist(int client, float dist);
 
 /**
  * Change the glow color.
  *
- * @param client        Entity index.
+ * @param client        Client index.
  * @param color         New color (RGB).
  * @return              Returns true if set, false if invalid entity.
  */
-native bool Glow_SetColor(int entity, int color[3]);
+native bool Glow_SetColor(int client, int color[3]);
 
 /**
  * Add the target to the owner's exclude list. (The glow isn't drawn for list members)
